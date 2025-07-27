@@ -65,11 +65,11 @@ jobs:
       run: terraform validate
       working-directory: ./
 
-    # - name: Terraform Plan
-    #   id: plan
-    #   run: terraform plan -no-color -input=false
-    #   working-directory: ./
-    #   # Add -var-file="secrets.tfvars" or -var="ENV_VAR=${{ secrets.YOUR_SECRET }}" if you manage sensitive vars this way
+    - name: Terraform Plan
+      id: plan
+      run: terraform plan -no-color -input=false
+      working-directory: ./
+      # Add -var-file="secrets.tfvars" or -var="ENV_VAR=${{ secrets.YOUR_SECRET }}" if you manage sensitive vars this way
 
     # - name: Terraform Apply
     #   id: apply
