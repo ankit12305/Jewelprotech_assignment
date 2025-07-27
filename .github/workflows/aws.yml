@@ -71,10 +71,10 @@ jobs:
       working-directory: ./
       # Add -var-file="secrets.tfvars" or -var="ENV_VAR=${{ secrets.YOUR_SECRET }}" if you manage sensitive vars this way
 
-    # - name: Terraform Apply
-    #   id: apply
-    #   run: terraform apply -auto-approve -input=false
-    #   working-directory: ./
+    - name: Terraform Apply
+      id: apply
+      run: terraform apply -auto-approve -input=false
+      working-directory: ./
       #env:
         # Example of passing environment variables from GitHub Secrets to Terraform
         # Ensure these are defined in your Terraform variables (e.g., in variables.tf)
