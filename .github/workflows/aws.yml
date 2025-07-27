@@ -3,9 +3,9 @@
 name: Deploy to AWS ECS
 
 on:
-  push:
-    branches:
-      - main # Trigger on pushes to the main branch
+  # This enables manual triggering from the GitHub Actions UI.
+  # No 'inputs:' block means no parameters will be prompted.
+  workflow_dispatch:
 
 env:
   AWS_REGION: us-east-1 # Define your AWS region
