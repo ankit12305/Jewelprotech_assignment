@@ -25,30 +25,6 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
-    # - name: Login to Amazon ECR
-    #   id: login-ecr
-    #   uses: aws-actions/amazon-ecr-login@v2
-
-    # - name: Get ECR repository URL
-    #   id: ecr_url
-    #   run: |
-    #     ECR_REPO_URL=$(aws ecr describe-repositories --repository-names my-app-repo --query "repositories[0].repositoryUri" --output text)
-    #     echo "ECR_REPO_URL=$ECR_REPO_URL" >> $GITHUB_ENV
-      # working-directory: ./terraform # Assuming main.tf is in a 'terraform' directory
-
-    # - name: Build and push Docker image to ECR
-    #   env:
-    #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-    #     REPOSITORY_NAME: my-app-repo
-    #     IMAGE_TAG: ${{ github.sha }} # Use commit SHA as image tag for uniqueness
-    #   run: |
-    #     docker build -t $ECR_REGISTRY/$REPOSITORY_NAME:$IMAGE_TAG .
-    #     docker push $ECR_REGISTRY/$REPOSITORY_NAME:$IMAGE_TAG
-    #     # Optionally, tag with 'latest' as well
-    #     docker tag $ECR_REGISTRY/$REPOSITORY_NAME:$IMAGE_TAG $ECR_REGISTRY/$REPOSITORY_NAME:latest
-    #     docker push $ECR_REGISTRY/$REPOSITORY_NAME:latest
-      # Assuming your Dockerfile is in the root of your repository.
-      # If not, adjust the `.` to the correct path, e.g., `./app`
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
@@ -82,3 +58,30 @@ jobs:
         # TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
         # TF_VAR_app_secret_key: ${{ secrets.APP_SECRET_KEY }}
         # ... and so on for any application-specific secrets
+
+
+
+    # - name: Login to Amazon ECR
+    #   id: login-ecr
+    #   uses: aws-actions/amazon-ecr-login@v2
+
+    # - name: Get ECR repository URL
+    #   id: ecr_url
+    #   run: |
+    #     ECR_REPO_URL=$(aws ecr describe-repositories --repository-names my-app-repo --query "repositories[0].repositoryUri" --output text)
+    #     echo "ECR_REPO_URL=$ECR_REPO_URL" >> $GITHUB_ENV
+      # working-directory: ./terraform # Assuming main.tf is in a 'terraform' directory
+
+    # - name: Build and push Docker image to ECR
+    #   env:
+    #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+    #     REPOSITORY_NAME: my-app-repo
+    #     IMAGE_TAG: ${{ github.sha }} # Use commit SHA as image tag for uniqueness
+    #   run: |
+    #     docker build -t $ECR_REGISTRY/$REPOSITORY_NAME:$IMAGE_TAG .
+    #     docker push $ECR_REGISTRY/$REPOSITORY_NAME:$IMAGE_TAG
+    #     # Optionally, tag with 'latest' as well
+    #     docker tag $ECR_REGISTRY/$REPOSITORY_NAME:$IMAGE_TAG $ECR_REGISTRY/$REPOSITORY_NAME:latest
+    #     docker push $ECR_REGISTRY/$REPOSITORY_NAME:latest
+      # Assuming your Dockerfile is in the root of your repository.
+      # If not, adjust the `.` to the correct path, e.g., `./app`    
