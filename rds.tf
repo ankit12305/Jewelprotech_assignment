@@ -1,9 +1,14 @@
 # rds.tf
 
-# 17. RDS Instance (MariaDB)
 resource "aws_db_subnet_group" "rds_subnet_group" {
-  name       = "my-app-rds-subnet-group"
-  subnet_ids = [aws_subnet.public.id] # In a real scenario, use private subnets
+  name        = "my-app-rds-subnet-group"
+  description = "Subnet group for RDS DB instance"
+  # Provide both private subnets here
+  subnet_ids  = [aws_subnet.private_1.id, aws_subnet.private_2.id] # 
+
+  tags = {
+    Name = "my-app-rds-subnet-group"
+  }
 }
 
 resource "aws_db_instance" "db" { 
@@ -19,7 +24,7 @@ resource "aws_db_instance" "db" {
   port                  = var.rds_port
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
   db_subnet_group_name  = aws_db_subnet_group.rds_subnet_group.name
-  publicly_accessible   = true # For simplicity; ideally, keep private and access via ECS
+  publicly_accessible   = false # For simplicity; ideally, keep private and access via ECS
   skip_final_snapshot   = true # For dev/test environments
-  multi_az              = false
+  multi_az              = true
 }
