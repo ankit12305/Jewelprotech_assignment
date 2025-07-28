@@ -16,10 +16,10 @@ resource "aws_s3_bucket" "app_bucket" {
   }
 }
 
-resource "aws_s3_bucket_acl" "app_bucket_acl" {
-  bucket = aws_s3_bucket.app_bucket.id # Reference the ID of the bucket created above
-  acl    = "private" # Set the desired ACL here, e.g., "private", "public-read"
-}
+#resource "aws_s3_bucket_acl" "app_bucket_acl" {
+#  bucket = aws_s3_bucket.app_bucket.id # Reference the ID of the bucket created above
+#  acl    = "private" # Set the desired ACL here, e.g., "private", "public-read"
+#}
 
 resource "aws_s3_bucket_versioning" "app_bucket_versioning" {
   bucket = aws_s3_bucket.app_bucket.id # Reference the ID of the bucket created above
