@@ -12,7 +12,7 @@ env:
 
 jobs:
   deploy:
-    runs-on: Ankits-Air
+    runs-on: [self-hosted, macOS, arm64]
 
     steps:
     - name: Checkout code
