@@ -8,7 +8,6 @@ provider "aws" {
 # You might place module calls here if you convert these resources into a module later.
 
 
-
 terraform {
 backend "s3" {
     bucket         = "terraform-state-file-myapp" # <--- IMPORTANT: Replace with a globally unique S3 bucket name
