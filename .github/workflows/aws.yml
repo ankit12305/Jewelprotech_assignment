@@ -90,7 +90,7 @@ jobs:
     - name: Force new ECS service deployment
       run: |
         aws ecs update-service \
-          --cluster ${{ aws_ecs_cluster.my_cluster.name }} \
+          --cluster ${{ env.ECS_CLUSTER_NAME }} \
           --service my-app-service \
           --force-new-deployment
       env:
