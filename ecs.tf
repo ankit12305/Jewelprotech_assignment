@@ -9,13 +9,30 @@ resource "aws_ecs_cluster" "my_cluster" {
   }
 }
 
+data "aws_ami" "ecs_optimized_al2023_x86_64" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["al2023-ami-ecs-hvm-*-x86_64"]
+  }
+
+  filter {
+    name   = "architecture"
+    values = ["x86_64"]
+  }
+
+  # You can add more filters if needed, e.g., for specific kernel versions
+}
+
 # NEW: 11. Launch Template for EC2 Instances (ECS Worker Nodes)
 # This replaces the deprecated aws_launch_configuration.
 resource "aws_launch_template" "ecs_launch_template" {
   name_prefix   = "ecs-launch-template-"
-  image_id      = var.ecs_ami_id # IMPORTANT: Ensure this is a valid ECS-optimized AMI for your region (us-east-1)
+  image_id      = data.aws_ami.ecs_optimized_al2023_x86_64.id # IMPORTANT: Ensure this is a valid ECS-optimized AMI for your region (us-east-1)
   instance_type = var.ecs_instance_type
-  key_name      = demo-eks-key # Optional: If you use an SSH key for access, ensure this var is defined
+  key_name      = "kube-demo" # Optional: If you use an SSH key for access, ensure this var is defined
 
   # Assign IAM Instance Profile to instances launched by this template
   iam_instance_profile {
@@ -225,12 +242,7 @@ resource "aws_ecs_service" "my_service" {
     container_port   = 80
   }
 
-  network_configuration {
-    # Use private subnets here if your tasks need private network access to RDS etc.
-    subnets          = [aws_subnet.private_1.id, aws_subnet.private_2.id]
-    security_groups  = [aws_security_group.app_sg.id]
-    assign_public_ip = false # Tasks should not have public IPs if behind an ALB in private subnets
-  }
+
 
   depends_on = [
     aws_autoscaling_group.ecs_asg, # Ensure ASG is up before service tries to place tasks
