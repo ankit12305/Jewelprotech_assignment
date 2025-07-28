@@ -34,7 +34,7 @@ resource "aws_launch_configuration" "ecs_launch_config" {
 # 12. Auto Scaling Group for ECS Instances
 resource "aws_autoscaling_group" "ecs_asg" {
   name                 = "ecs-asg"
-  vpc_zone_identifier  = [aws_subnet.public.id]
+  vpc_zone_identifier  = [aws_subnet.public_1.id, aws_subnet.public_2.id]
   launch_configuration = aws_launch_configuration.ecs_launch_config.name
   min_size             = var.ecs_min_size
   max_size             = var.ecs_max_size
