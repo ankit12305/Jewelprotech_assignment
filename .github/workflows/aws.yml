@@ -65,12 +65,12 @@ jobs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v2
 
-    # - name: Get ECR repository URL
-    #   id: ecr_url
-    #   run: |
-    #     ECR_REPO_URL=$(aws ecr describe-repositories --repository-names my-app-repo --query "repositories[0].repositoryUri" --output text)
-    #     echo "ECR_REPO_URL=$ECR_REPO_URL" >> $GITHUB_ENV
-      # working-directory: ./terraform # Assuming main.tf is in a 'terraform' directory
+    - name: Get ECR repository URL
+      id: ecr_url
+      run: |
+         ECR_REPO_URL=$(aws ecr describe-repositories --repository-names my-app-repo --query "repositories[0].repositoryUri" --output text)
+         echo "ECR_REPO_URL=$ECR_REPO_URL" >> $GITHUB_ENV
+      working-directory: ./ # Assuming main.tf is in a 'terraform' directory
 
     # - name: Build and push Docker image to ECR
     #   env:
