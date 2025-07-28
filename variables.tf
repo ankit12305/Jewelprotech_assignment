@@ -33,7 +33,7 @@ variable "ecs_instance_type" {
 variable "ecs_ami_id" {
   description = "AMI ID for ECS-optimized instances (IMPORTANT: Replace with a valid AMI)"
   type        = string
-  default     = "ami-0aaf509a1ebd95e61" # !!! REPLACE THIS WITH A VALID ECS OPTIMIZED AMI ID FOR us-east-1 !!!
+  default     = "ami-0014001d539c943ac" # !!! REPLACE THIS WITH A VALID ECS OPTIMIZED AMI ID FOR us-east-1 !!!
 }
 
 variable "rds_instance_class" {
