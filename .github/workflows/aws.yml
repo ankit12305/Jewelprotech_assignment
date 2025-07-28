@@ -85,4 +85,13 @@ jobs:
          docker tag $ECR_REGISTRY/$REPOSITORY_NAME:$IMAGE_TAG $ECR_REGISTRY/$REPOSITORY_NAME:latest
          docker push $ECR_REGISTRY/$REPOSITORY_NAME:latest
       # Assuming your Dockerfile is in the root of your repository.
-      # If not, adjust the `.` to the correct path, e.g., `./app`    
+      # If not, adjust the `.` to the correct path, e.g., `./app`
+
+    - name: Force new ECS service deployment
+      run: |
+        aws ecs update-service \
+          --cluster ${{ aws_ecs_cluster.my_cluster.name }} \
+          --service my-app-service \
+          --force-new-deployment
+      env:
+        ECS_CLUSTER_NAME: my-app-cluster  
