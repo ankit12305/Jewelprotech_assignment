@@ -9,48 +9,78 @@ resource "aws_ecs_cluster" "my_cluster" {
   }
 }
 
-# 11. Launch Configuration for EC2 Instances (ECS Worker Nodes)
-resource "aws_launch_configuration" "ecs_launch_config" {
-  name_prefix                 = "ecs-launch-config-"
-  image_id                    = var.ecs_ami_id # IMPORTANT: Replace with a valid ECS-optimized AMI for us-east-1
-  instance_type               = var.ecs_instance_type
-  iam_instance_profile        = aws_iam_instance_profile.ecs_instance_profile.name
-  security_groups             = [aws_security_group.ecs_instance_sg.id]
-  associate_public_ip_address = true
+# NEW: 11. Launch Template for EC2 Instances (ECS Worker Nodes)
+# This replaces the deprecated aws_launch_configuration.
+resource "aws_launch_template" "ecs_launch_template" {
+  name_prefix   = "ecs-launch-template-"
+  image_id      = var.ecs_ami_id # IMPORTANT: Ensure this is a valid ECS-optimized AMI for your region (us-east-1)
+  instance_type = var.ecs_instance_type
+  key_name      = demo-eks-key # Optional: If you use an SSH key for access, ensure this var is defined
 
-  user_data = <<-EOF
-              #!/bin/bash
-              echo ECS_CLUSTER=${aws_ecs_cluster.my_cluster.name} >> /etc/ecs/ecs.config
-              sudo yum update -y
-              sudo yum install -y amazon-ecs-init
-              sudo systemctl enable --now ecs
-              EOF
+  # Assign IAM Instance Profile to instances launched by this template
+  iam_instance_profile {
+    name = aws_iam_instance_profile.ecs_instance_profile.name
+  }
+
+  # Network configuration for instances launched by this template
+  network_interfaces {
+    associate_public_ip_address = true # Based on your previous launch_configuration setting
+    delete_on_termination       = true # Good practice: ENI terminates with instance
+    security_groups             = [aws_security_group.ecs_instance_sg.id]
+  }
+
+  # User Data for ECS Agent Configuration (base64-encoded script)
+  # This uses a separate file for user_data for better readability.
+  user_data = base64encode(templatefile("${path.module}/ecs_user_data.sh", {
+    ecs_cluster_name = aws_ecs_cluster.my_cluster.name
+  }))
+
+  # Tags applied to the EC2 instances themselves
+  tag_specifications {
+    resource_type = "instance"
+    tags = {
+      Name = "ecs-worker-node"
+    }
+  }
+
+  # Tags applied to the Launch Template resource itself
+  tags = {
+    Name = "ecs-launch-template"
+  }
 
   lifecycle {
     create_before_destroy = true
   }
 }
 
+
 # 12. Auto Scaling Group for ECS Instances
 resource "aws_autoscaling_group" "ecs_asg" {
   name                 = "ecs-asg"
-  vpc_zone_identifier  = [aws_subnet.public_1.id, aws_subnet.public_2.id]
-  launch_configuration = aws_launch_configuration.ecs_launch_config.name
-  min_size             = var.ecs_min_size
-  max_size             = var.ecs_max_size
-  desired_capacity     = var.ecs_desired_count
+  vpc_zone_identifier  = [aws_subnet.public_1.id, aws_subnet.public_2.id] # Ensure these subnets are correctly defined and public
 
-  
-  tag { 
-    key                 = "Name"
-    value               = "ecs-worker-node"
-    propagate_at_launch = true
+  # NEW: Reference the Launch Template instead of Launch Configuration
+  launch_template {
+    id      = aws_launch_template.ecs_launch_template.id
+    version = "$Latest" # Always use the latest version of the template
   }
 
-  tag { 
+  min_size         = var.ecs_min_size
+  max_size         = var.ecs_max_size
+  desired_capacity = var.ecs_desired_count
+
+  # Tags for the Auto Scaling Group resource itself
+  tag {
+    key                 = "Name"
+    value               = "ecs-asg-group"
+    propagate_at_launch = false # Do not propagate this ASG tag to instances, as instance tags are in the LT
+  }
+
+  # This tag is important for ECS auto-discovery of instances
+  tag {
     key                 = "AmazonECSManaged"
     value               = ""
-    propagate_at_launch = true
+    propagate_at_launch = true # Propagate this tag to instances
   }
 }
 
@@ -69,10 +99,10 @@ resource "aws_ecs_task_definition" "my_task" {
   requires_compatibilities = ["EC2"]
   network_mode             = "bridge" # Or 'awsvpc' if you want each task to get its own ENI
 
-  cpu                      = "256"
-  memory                   = "512"
-  task_role_arn            = aws_iam_role.ecs_task_execution_role.arn # Optional, depends on task needs
-  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn # Mandatory for EC2 launch type for logging/image pull
+  cpu              = "256"
+  memory           = "512"
+  task_role_arn    = aws_iam_role.ecs_task_execution_role.arn # Optional, depends on task needs
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn # Mandatory for EC2 launch type for logging/image pull
 
   container_definitions = jsonencode([
     {
@@ -84,7 +114,7 @@ resource "aws_ecs_task_definition" "my_task" {
       portMappings = [
         {
           containerPort = 80,
-          hostPort      = 80
+          hostPort      = 80 # Maps container port 80 to host port 80
         }
       ],
       environment = [ # Example of injecting environment variables from GitHub Secrets later
@@ -110,7 +140,7 @@ resource "aws_ecs_task_definition" "my_task" {
         logDriver = "awslogs",
         options = {
           "awslogs-group"         = aws_cloudwatch_log_group.ecs_log_group.name,
-          "awslogs-region"        = var.region,
+          "awslogs-region"        = var.region, # Ensure var.region is defined in variables.tf
           "awslogs-stream-prefix" = "ecs"
         }
       }
@@ -121,9 +151,10 @@ resource "aws_ecs_task_definition" "my_task" {
 # 15. CloudWatch Log Group for ECS Tasks
 resource "aws_cloudwatch_log_group" "ecs_log_group" {
   name              = "/ecs/my-app-task"
-  retention_in_days = var.log_retention_days
+  retention_in_days = var.log_retention_days # Ensure var.log_retention_days is defined in variables.tf
 }
 
+# 16. Application Load Balancer
 resource "aws_lb" "app_lb" {
   name               = "my-app-alb" # Choose a unique name
   internal           = false        # Set to true for internal-only ALB
@@ -139,7 +170,7 @@ resource "aws_lb" "app_lb" {
   }
 }
 
-
+# 17. ALB Target Group
 resource "aws_lb_target_group" "app_tg" {
   name        = "my-app-tg" # Choose a unique name for your target group
   port        = 80          # The port your container listens on
@@ -162,7 +193,7 @@ resource "aws_lb_target_group" "app_tg" {
   }
 }
 
-# --- 3. Define the Listener for the ALB ---
+# 18. Define the Listener for the ALB
 resource "aws_lb_listener" "http_listener" {
   load_balancer_arn = aws_lb.app_lb.arn # Reference the ALB's ARN
   port              = 80
@@ -179,7 +210,7 @@ resource "aws_lb_listener" "http_listener" {
 }
 
 
-# 16. ECS Service
+# 19. ECS Service
 resource "aws_ecs_service" "my_service" {
   name            = "my-app-service"
   cluster         = aws_ecs_cluster.my_cluster.id
@@ -187,12 +218,12 @@ resource "aws_ecs_service" "my_service" {
   desired_count   = var.ecs_desired_count
   launch_type     = "EC2"
 
-  #If you are using an ALB, uncomment and configure load_balancer block
-   load_balancer {
-     target_group_arn = aws_lb_target_group.app_tg.arn
-     container_name   = "my-app-container"
-     container_port   = 80
-   }
+  # Load balancer configuration for the ECS service
+  load_balancer {
+    target_group_arn = aws_lb_target_group.app_tg.arn
+    container_name   = "my-app-container"
+    container_port   = 80
+  }
 
   network_configuration {
     # Use private subnets here if your tasks need private network access to RDS etc.
@@ -203,8 +234,7 @@ resource "aws_ecs_service" "my_service" {
 
   depends_on = [
     aws_autoscaling_group.ecs_asg, # Ensure ASG is up before service tries to place tasks
-    aws_iam_role_policy_attachment.ecs_task_execution_policy,
+    aws_iam_role_policy_attachment.ecs_task_execution_policy, # Ensure execution role is attached
+    aws_lb_listener.http_listener, # Ensure ALB listener is ready
   ]
 }
-
-
