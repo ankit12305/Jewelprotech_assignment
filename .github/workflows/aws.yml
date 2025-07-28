@@ -72,16 +72,17 @@ jobs:
          echo "ECR_REPO_URL=$ECR_REPO_URL" >> $GITHUB_ENV
       working-directory: ./ # Assuming main.tf is in a 'terraform' directory
 
-    # - name: Build and push Docker image to ECR
-    #   env:
-    #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-    #     REPOSITORY_NAME: my-app-repo
-    #     IMAGE_TAG: ${{ github.sha }} # Use commit SHA as image tag for uniqueness
-    #   run: |
-    #     docker build -t $ECR_REGISTRY/$REPOSITORY_NAME:$IMAGE_TAG .
-    #     docker push $ECR_REGISTRY/$REPOSITORY_NAME:$IMAGE_TAG
-    #     # Optionally, tag with 'latest' as well
-    #     docker tag $ECR_REGISTRY/$REPOSITORY_NAME:$IMAGE_TAG $ECR_REGISTRY/$REPOSITORY_NAME:latest
-    #     docker push $ECR_REGISTRY/$REPOSITORY_NAME:latest
+    - name: Build and push Docker image to ECR
+      working-directory: ./my-nginx-app/
+      env:
+         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+         REPOSITORY_NAME: my-app-repo
+         IMAGE_TAG: ${{ github.sha }} # Use commit SHA as image tag for uniqueness
+      run: |
+         docker build -t $ECR_REGISTRY/$REPOSITORY_NAME:$IMAGE_TAG .
+         docker push $ECR_REGISTRY/$REPOSITORY_NAME:$IMAGE_TAG
+         # Optionally, tag with 'latest' as well
+         docker tag $ECR_REGISTRY/$REPOSITORY_NAME:$IMAGE_TAG $ECR_REGISTRY/$REPOSITORY_NAME:latest
+         docker push $ECR_REGISTRY/$REPOSITORY_NAME:latest
       # Assuming your Dockerfile is in the root of your repository.
       # If not, adjust the `.` to the correct path, e.g., `./app`    
