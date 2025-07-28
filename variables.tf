@@ -45,13 +45,13 @@ variable "availability_zone" {
 variable "ecs_instance_type" {
   description = "EC2 instance type for ECS worker nodes"
   type        = string
-  default     = "t2.micro"
+  default     = "t3.micro"
 }
 
 variable "ecs_ami_id" {
   description = "AMI ID for ECS-optimized instances (IMPORTANT: Replace with a valid AMI)"
   type        = string
-  default     = "ami-0014001d539c943ac" # !!! REPLACE THIS WITH A VALID ECS OPTIMIZED AMI ID FOR us-east-1 !!!
+  default     = "ami-000dd7709fc500032" # !!! REPLACE THIS WITH A VALID ECS OPTIMIZED AMI ID FOR us-east-1 !!!
 }
 
 variable "rds_instance_class" {
