@@ -129,7 +129,7 @@ resource "aws_lb" "app_lb" {
   internal           = false        # Set to true for internal-only ALB
   load_balancer_type = "application"
   security_groups    = [aws_security_group.app_sg.id] # SG for the ALB, allowing inbound traffic on listener ports
-  subnets            = [aws_subnet.public.id] # Place ALB in public subnets
+  subnets            = [aws_subnet.public_1.id, aws_subnet.public_2.id] # Place ALB in public subnets
 
   # Optional: Enable deletion protection for production
   enable_deletion_protection = true # Set to false for easier teardown in dev/test
@@ -195,9 +195,10 @@ resource "aws_ecs_service" "my_service" {
    }
 
   network_configuration {
-    subnets          = [aws_subnet.public.id]
+    # Use private subnets here if your tasks need private network access to RDS etc.
+    subnets          = [aws_subnet.private_1.id, aws_subnet.private_2.id]
     security_groups  = [aws_security_group.app_sg.id]
-    assign_public_ip = true # Assign public IP to tasks for direct access if no ALB
+    assign_public_ip = false # Tasks should not have public IPs if behind an ALB in private subnets
   }
 
   depends_on = [
